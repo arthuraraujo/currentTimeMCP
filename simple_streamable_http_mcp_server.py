@@ -26,19 +26,19 @@ def get_current_datetime() -> str:
 
 
 # CORREÇÃO: Use 'mcp.app.get' para acessar o decorador do FastAPI
-@mcp.app.get("/healthcheck")
-def healthcheck():
-    """
-    Healthcheck endpoint to verify if the server is running.
-    """
-    return JSONResponse(content={"status": "ok"})
+# @mcp.app.get("/healthcheck")
+# def healthcheck():
+#     """
+#     Healthcheck endpoint to verify if the server is running.
+#     """
+#     return JSONResponse(content={"status": "ok"})
 
 
 def main():
     """Main entry point for the MCP server"""
-    print("Starting DateTime MCP Server...")
-    print("Available tools: get_current_datetime")
-    print("Healthcheck endpoint available at GET /healthcheck")
+    # print("Starting DateTime MCP Server...")
+    # print("Available tools: get_current_datetime")
+    # print("Healthcheck endpoint available at GET /healthcheck")
 
     # Run with streamable HTTP transport
     mcp.run(transport="streamable-http")
