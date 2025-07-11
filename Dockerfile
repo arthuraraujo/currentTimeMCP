@@ -20,8 +20,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 USER appuser
 
-# Use a porta que preferir, por exemplo, 5000.
 EXPOSE 5000
 
-# Executa o uvicorn apontando para a nossa instância principal 'app'.
-CMD ["uvicorn", "mcp_server:app", "--host", "0.0.0.0", "--port", "5000"]
+# CORREÇÃO FINAL: O comando agora simplesmente executa o script Python,
+# que por sua vez chama mcp.run() para iniciar o servidor.
+CMD ["python", "mcp_server.py"]
