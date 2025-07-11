@@ -1,43 +1,35 @@
-# =================================================================
-# Estágio 1: "Builder" - Instala dependências
-# =================================================================
+# Estágio de build permanece o mesmo
 FROM python:3.12-slim as builder
-
 WORKDIR /app
-
-# Instala o 'uv' globalmente no estágio de build
 RUN pip install uv
-
-# Cria um ambiente virtual para isolar as dependências
-RUN uv venv /opt/venv
-
-# "Ativa" o venv para os próximos comandos RUN
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
 COPY pyproject.toml .
-
-# Instala as dependências do projeto no ambiente virtual
 RUN uv pip install --no-cache -r pyproject.toml
 
-
-# =================================================================
-# Estágio 2: "Final" - Configura o container de execução
-# =================================================================
+# Estágio final atualizado
 FROM python:3.12-slim
+
+# Instala o NGINX
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 RUN adduser --system --no-create-home appuser
 
 COPY --from=builder /opt/venv /opt/venv
-COPY simple_streamable_http_mcp_server.py .
+COPY mcp_server.py .
+COPY health_check_api.py .
+COPY start.sh .
+# Copia a configuração do NGINX para o local correto
+COPY nginx.conf /etc/nginx/nginx.conf
 
+RUN chmod +x /app/start.sh
 ENV PATH="/opt/venv/bin:$PATH"
-
 USER appuser
 
-EXPOSE 8000
+# Expõe apenas a porta do NGINX
+EXPOSE 5000
 
-# CORREÇÃO: Uvicorn deve rodar o objeto 'app', que agora é o nosso ponto de entrada principal.
-CMD ["uvicorn", "simple_streamable_http_mcp_server:app", "--host", "0.0.0.0", "--port", "5000"]
+# Inicia o script que levanta os 3 serviços
+CMD ["/app/start.sh"]
