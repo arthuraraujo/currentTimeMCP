@@ -1,4 +1,4 @@
-# Estágio de build (sem alterações)
+# Estágio de build
 FROM python:3.12-slim as builder
 WORKDIR /app
 RUN pip install uv
@@ -18,10 +18,15 @@ COPY mcp_server.py .
 
 ENV PATH="/opt/venv/bin:$PATH"
 
+# CORREÇÃO FINAL: Definimos HOST e PORT como variáveis de ambiente.
+# A biblioteca MCP usará estes valores para configurar seu servidor interno.
+ENV HOST="0.0.0.0"
+ENV PORT="5000"
+
 USER appuser
 
+# Expõe a porta definida pela variável de ambiente.
 EXPOSE 5000
 
-# CORREÇÃO FINAL: O comando agora simplesmente executa o script Python,
-# que por sua vez chama mcp.run() para iniciar o servidor.
+# O comando para iniciar o servidor permanece o mesmo.
 CMD ["python", "mcp_server.py"]

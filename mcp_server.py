@@ -23,9 +23,10 @@ def get_current_datetime() -> str:
 # 3. Criar a função main para iniciar o servidor com o método .run().
 def main():
     """Ponto de entrada que inicia o servidor MCP."""
-    print("Starting pure MCP Server on port 5000...")
-    # O host 0.0.0.0 é crucial para funcionar no Docker.
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=5000)
+    print("Starting pure MCP Server...")
+    print("Host and Port will be configured by HOST/PORT environment variables.")
+    # A chamada correta, sem os argumentos não suportados.
+    mcp.run(transport="streamable-http")
 
 # 4. Executar a função main se o script for chamado diretamente.
 if __name__ == "__main__":
