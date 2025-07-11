@@ -9,24 +9,23 @@ RUN uv pip install --no-cache -r pyproject.toml -p /opt/venv/bin/python
 # Estágio final
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 RUN addgroup --system appuser && adduser --system --ingroup appuser --no-create-home appuser
+RUN chown -R appuser:appuser /var/lib/nginx /var/log/nginx
 
 COPY --from=builder /opt/venv /opt/venv
 COPY mcp_server.py .
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY start.sh .
 
+RUN chmod +x /app/start.sh
 ENV PATH="/opt/venv/bin:$PATH"
-
-# CORREÇÃO FINAL: Definimos HOST e PORT como variáveis de ambiente.
-# A biblioteca MCP usará estes valores para configurar seu servidor interno.
-ENV HOST="0.0.0.0"
-ENV PORT="5000"
 
 USER appuser
 
-# Expõe a porta definida pela variável de ambiente.
 EXPOSE 5000
 
-# O comando para iniciar o servidor permanece o mesmo.
-CMD ["python", "mcp_server.py"]
+CMD ["/app/start.sh"]
