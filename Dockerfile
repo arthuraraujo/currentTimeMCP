@@ -43,4 +43,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "simple_streamable_http_mcp_server:mcp", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "simple_streamable_http_mcp_server:mcp", "--host", "0.0.0.0", "--port", "5000"]
