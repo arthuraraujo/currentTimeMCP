@@ -1,13 +1,21 @@
-# Estágio de build permanece o mesmo
+# Estágio 1: "Builder" - Instala dependências
 FROM python:3.12-slim as builder
 WORKDIR /app
-RUN pip install uv
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-COPY pyproject.toml .
-RUN uv pip install --no-cache -r pyproject.toml
 
-# Estágio final atualizado
+# Instala o 'uv'
+RUN pip install uv
+
+# Cria o ambiente virtual
+RUN uv venv /opt/venv
+
+COPY pyproject.toml .
+
+# CORREÇÃO:
+# Removemos os ENV do estágio de build e usamos a flag '-p' para apontar
+# explicitamente para o interpretador Python correto dentro do venv.
+RUN uv pip install --no-cache -r pyproject.toml -p /opt/venv/bin/python
+
+# Estágio final (permanece o mesmo)
 FROM python:3.12-slim
 
 # Instala o NGINX
@@ -21,7 +29,6 @@ COPY --from=builder /opt/venv /opt/venv
 COPY mcp_server.py .
 COPY health_check_api.py .
 COPY start.sh .
-# Copia a configuração do NGINX para o local correto
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN chmod +x /app/start.sh
