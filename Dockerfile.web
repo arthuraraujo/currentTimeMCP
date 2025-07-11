@@ -1,0 +1,21 @@
+# Usa uma imagem base oficial do Python
+FROM python:3.11-slim
+
+# Define o diretório de trabalho no contêiner
+WORKDIR /usr/src/app
+
+# Copia todos os arquivos do projeto para o contêiner
+# Isso inclui a aplicação principal, os novos diretórios 'healthcheck' e 'proxy', e o 'start.sh'
+COPY . .
+
+# Instala as dependências do projeto definidas em pyproject.toml
+RUN pip install --no-cache-dir .
+
+# Expõe a porta em que o proxy reverso escutará
+EXPOSE 8000
+
+# Torna o script de inicialização executável
+RUN chmod +x /usr/src/app/start.sh
+
+# Define o script de inicialização como o comando padrão para o contêiner
+CMD ["/usr/src/app/start.sh"]

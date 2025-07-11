@@ -1,21 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "datetime-mcp-server"
-version = "0.1.0"
-description = "MCP Server to get current date and time for São Paulo (UTC-3)"
+name = "mcp-simple-timeserver"
+version = "1.1.2"
+authors = [
+  { name="Andy Brandt", email="andy@codesprinters.com" },
+]
+description = "A simple MCP server that provides current time - either local or from an NTP server."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 dependencies = [
-    "fastapi>=0.100.0",
-    "uvicorn[standard]>=0.20.0",
-    "mcp>=1.0.0",
+    "fastmcp",
+    "ntplib",
+    "pywin32; sys_platform == 'win32'"
 ]
 
+[tool.setuptools.packages.find]
+exclude = ["mcp_simple_timeserver.web*"]
+
+[project.urls]
+"Homepage" = "https://github.com/andybrandt/mcp-simple-timeserver"
+
 [project.scripts]
-mcp-server = "simple_streamable_http_mcp_server:main"
+mcp-simple-timeserver = "mcp_simple_timeserver:main"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["."]
+[project.optional-dependencies]
+cli = ["fastmcp[cli]"]

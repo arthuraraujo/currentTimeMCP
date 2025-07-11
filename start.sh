@@ -1,24 +1,17 @@
 #!/bin/sh
 
-# Inicia o servidor MCP em segundo plano
-echo "Starting MCP server process..."
-python /app/mcp_server.py &
+# Garante que o script pare se algum comando falhar
+set -e
 
-# Inicia o NGINX em primeiro plano para manter o container vivo
-echo "Starting NGINX reverse proxy on port 5000..."
-nginx -g 'daemon off;'
+# Inicia o servidor de healthcheck em background
+echo "Iniciando o servidor de healthcheck na porta 8001..."
+python3 -m healthcheck.server &
 
-# #!/bin/sh
+# Inicia o servidor MCP de tempo em background
+echo "Iniciando o servidor MCP na porta 8002..."
+python3 -m mcp_simple_timeserver.web.server &
 
-# # Inicia a API de healthcheck em segundo plano
-# echo "Starting health check process on port 5001..."
-# python /app/health_check_api.py &
-
-# # Inicia o servidor MCP em segundo plano
-# echo "Starting MCP server process on port 8000..."
-# python /app/mcp_server.py &
-
-# # Inicia o NGINX em primeiro plano
-# # O NGINX agora é o processo principal que mantém o container rodando
-# echo "Starting NGINX reverse proxy on port 5000..."
-# nginx -g 'daemon off;'
+# Inicia o proxy reverso em foreground.
+# Isso mantém o contêiner ativo e roteia o tráfego para os outros serviços.
+echo "Iniciando o proxy reverso na porta 8000..."
+exec python3 -m proxy.server
