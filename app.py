@@ -25,19 +25,32 @@ AVAILABLE_TOOLS = {
     "getCurrentDateTime": get_current_date_time_tool
 }
 
-# --- Endpoint de Health Check ---
-# NOVO: Endpoint para monitoramento de saúde do serviço.
+# --- Endpoint de Health Check (Boa prática, vamos manter) ---
 @app.route('/healthcheck', methods=['GET'])
 def health_check():
     """
     Retorna um status 200 OK se a aplicação estiver rodando.
-    Ideal para serviços de monitoramento (health checks).
     """
     return jsonify({
         "status": "healthy",
         "timestamp_utc": datetime.utcnow().isoformat() + "Z"
     })
 
+# --- NOVA ROTA PARA O CONECTOR DO CLAUDE ---
+@app.route('/getCurrentDateTime', methods=['GET'])
+def get_current_date_time_endpoint():
+    """
+    Endpoint dedicado para a ferramenta getCurrentDateTime.
+    Responde a GET, que é o que o conector simples do Claude espera.
+    """
+    sao_paulo_tz = ZoneInfo("America/Sao_Paulo")
+    now_in_sao_paulo = datetime.now(sao_paulo_tz)
+    
+    # Retorna diretamente o resultado que o LLM precisa
+    return jsonify({
+        'datetime': now_in_sao_paulo.isoformat(),
+        'timezone': str(sao_paulo_tz)
+    })
 
 # --- Endpoint do Protocolo MCP ---
 @app.route('/invoke', methods=['POST'])
