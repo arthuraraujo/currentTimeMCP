@@ -1,27 +1,58 @@
-# Dockerfile
+# =================================================================
+# Estágio 1: "Builder" - Instala dependências
+# Usamos uma imagem slim do Python para manter o tamanho reduzido.
+# =================================================================
+FROM python:3.12-slim as builder
 
-# Passo 1: Usar uma imagem base oficial do Python com Alpine Linux
-# É uma imagem leve, ideal para produção.
-FROM python:3.11-alpine
-
-# Passo 2: Definir o diretório de trabalho dentro do contêiner
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Passo 3: Copiar o arquivo de dependências para o diretório de trabalho
-# Copiamos este arquivo primeiro para aproveitar o cache do Docker.
-COPY requirements.txt .
+# Instala o 'uv', um instalador de pacotes Python rápido, como recomendado
+RUN pip install uv
 
-# Passo 4: Instalar as dependências
-# O --no-cache-dir garante que o cache do pip não seja armazenado, mantendo a imagem menor.
-RUN pip install --no-cache-dir -r requirements.txt
+# Cria um ambiente virtual para isolar as dependências da aplicação
+RUN uv venv /opt/venv
 
-# Passo 5: Copiar todo o código da aplicação para o diretório de trabalho
-COPY . .
+# Copia o arquivo de dependências para o container
+# Fazemos isso em um passo separado para aproveitar o cache do Docker.
+# A reinstalação das dependências só ocorrerá se este arquivo mudar.
+COPY pyproject.toml .
 
-# Passo 6: Expor a porta em que a aplicação irá rodar
-EXPOSE 5000
+# Instala as dependências do projeto no ambiente virtual usando 'uv'
+# A flag --no-cache ajuda a manter o tamanho da camada do Docker menor
+RUN /opt/venv/bin/uv pip install --no-cache -r pyproject.toml
 
-# Passo 7: Comando para iniciar a aplicação em produção usando Gunicorn
-# "app:app" refere-se ao arquivo app.py e à instância "app" do Flask dentro dele.
-# --bind 0.0.0.0:5000 faz o servidor escutar em todas as interfaces de rede.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+
+# =================================================================
+# Estágio 2: "Final" - Configura o container de execução
+# Partimos da mesma imagem base limpa para criar o container final.
+# =================================================================
+FROM python:3.12-slim
+
+# Define o diretório de trabalho
+WORKDIR /app
+
+# Cria um usuário e grupo 'appuser' sem privilégios de root para segurança
+RUN adduser --system --no-create-home appuser
+
+# Copia o ambiente virtual com as dependências já instaladas do estágio "builder"
+COPY --from=builder /opt/venv /opt/venv
+
+# Copia o código da sua aplicação para o container
+COPY simple_streamable_http_mcp_server.py .
+
+# Adiciona o diretório 'bin' do ambiente virtual ao PATH do sistema
+# Isso permite executar comandos como 'uvicorn' diretamente.
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Troca para o usuário sem privilégios que criamos
+USER appuser
+
+# Expõe a porta 8000, que é a porta padrão onde o Uvicorn irá rodar
+EXPOSE 8000
+
+# Define o comando para iniciar a aplicação quando o container for executado
+# Executamos 'uvicorn' diretamente para ter controle sobre o host e a porta.
+# O host '0.0.0.0' é essencial para que o servidor seja acessível de fora do container.
+# 'simple_streamable_http_mcp_server:mcp' aponta para a instância ASGI 'mcp' no seu arquivo.
+CMD ["uvicorn", "simple_streamable_http_mcp_server:mcp", "--host", "0.0.0.0", "--port", "5000"]
