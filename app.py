@@ -21,23 +21,32 @@ def get_current_date_time_tool():
     }
 
 # --- Registro de Ferramentas Disponíveis ---
-# Um dicionário que mapeia nomes de ferramentas às suas funções.
-# Isso torna a API facilmente extensível com novas ferramentas.
 AVAILABLE_TOOLS = {
     "getCurrentDateTime": get_current_date_time_tool
 }
 
-# --- Endpoint do Protocolo MCP ---
+# --- Endpoint de Health Check ---
+# NOVO: Endpoint para monitoramento de saúde do serviço.
+@app.route('/healthcheck', methods=['GET'])
+def health_check():
+    """
+    Retorna um status 200 OK se a aplicação estiver rodando.
+    Ideal para serviços de monitoramento (health checks).
+    """
+    return jsonify({
+        "status": "healthy",
+        "timestamp_utc": datetime.utcnow().isoformat() + "Z"
+    })
 
+
+# --- Endpoint do Protocolo MCP ---
 @app.route('/invoke', methods=['POST'])
 def invoke_tool():
     """
     Endpoint genérico que invoca uma ferramenta com base no nome fornecido.
     """
-    # Pega o corpo da requisição como JSON
     request_data = request.get_json()
 
-    # Validação básica da requisição
     if not request_data or 'tool_name' not in request_data:
         return jsonify({
             "status": "error",
@@ -46,7 +55,6 @@ def invoke_tool():
 
     tool_name = request_data['tool_name']
 
-    # Verifica se a ferramenta solicitada existe
     if tool_name not in AVAILABLE_TOOLS:
         return jsonify({
             "tool_name": tool_name,
@@ -55,11 +63,9 @@ def invoke_tool():
         }), 404
 
     try:
-        # Pega a função da ferramenta no dicionário e a executa
         tool_function = AVAILABLE_TOOLS[tool_name]
         result = tool_function()
 
-        # Monta a resposta de sucesso
         response = {
             "tool_name": tool_name,
             "status": "success",
@@ -68,7 +74,6 @@ def invoke_tool():
         return jsonify(response), 200
 
     except Exception as e:
-        # Resposta genérica para qualquer erro durante a execução da ferramenta
         return jsonify({
             "tool_name": tool_name,
             "status": "error",
